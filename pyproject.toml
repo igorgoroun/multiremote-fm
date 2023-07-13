@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "multiremote-fm"
+version = "{{VERSION_PLACEHOLDER}}"
+authors = [
+  { name="Igor Horun", email="snake@snake.mk.ua" },
+]
+description = "Library to manage files on multitype remotes - ftp, sftp, ftps, local, etc.."
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/igorgoroun/multiremote-fm"
+"Bug Tracker" = "https://github.com/igorgoroun/multiremote-fm/issues"
