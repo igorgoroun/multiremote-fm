@@ -2,30 +2,65 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Turn the uncommitted, never-importing `core/` + `drivers/` + `remote.py` split into one installable `multiremote_fm` package in which the five file operations are implemented exactly once, closing all 14 defects in the approved spec while keeping the public API frozen.
+**Goal:** Turn the never-importing `core/` + `drivers/` + `remote.py` split — committed as baseline `0d8d7bc`, still unimportable — into one installable `multiremote_fm` package in which the five file operations are implemented exactly once, closing all 14 defects in the approved spec while keeping the public API frozen.
 
 **Architecture:** Three layers. `remotes.py` holds the four thin frozen-API remotes (`Local`, `FTP`, `FTPS`, `SFTP`, ~15 lines each) which construct a backend and delegate. `driver.py` holds `RemoteDriver`, which implements `search`/`download`/`upload`/`move`/`delete` once over a `Backend`, is copy-on-write for `path`/`mask`/`files`, and shares one backend instance across all copies. `backends/` holds protocol primitives only (`connect`, `close`, `list`, `read`, `write`, `rename`, `remove`) — no backend ever sees a path mask, `unlink`, or `download_content`.
 
 **Tech Stack:** Python 3.10.20 (venv at `./venv`), stdlib `ftplib` / `os` / `fnmatch` / `posixpath`, optional `paramiko` 5.0.0 for SFTP, pytest 9.1.1 + ruff 0.16.5 + mypy 2.3.1, setuptools build backend, GitHub Actions.
 
-## Open Decisions — STOP: unresolved, pending the user
+## Resolved Decisions
 
-Two findings from the pre-flight scan depend on a decision the user has **not yet made**. A worker MUST NOT execute the affected steps until the user resolves them. Everything else in this plan is executable.
+Both decisions from the pre-flight scan are fully closed, along with OD-1's branch sub-question. OD-1 was resolved by the repo owner committing the baseline directly; the working branch `refactor/clean-package` has since been cut from that baseline and is checked out; OD-2 was approved by the user and is implemented in **Task 1 Step 4**. There is no prerequisite task and nothing blocks execution — start at Task 1.
 
-### OD-1 (BLOCKS every commit step, and Task 9) — git strategy for the 20 pre-existing staged paths
+### OD-1 — the previously-uncommitted work: **RESOLVED — by the repo owner directly, 2026-08-28**
 
-The index already holds **20 staged paths** of the user's uncommitted work before Task 1 runs. Two consequences:
+Commit `0d8d7bc` on `main` already captures the full baseline. It was made by the repo owner (`Ihor Horun <igor.goroun@gmail.com>`), not by any worker on this plan, and it is already pushed — `origin/main` points at it.
 
-- **D5:** every commit step has the shape `git add <paths> && git commit -m "..."`, and `git commit` without a pathspec commits the **entire index**. Task 1's commit would therefore sweep all 20 unrelated staged paths — a `README.md` rewrite, a `LICENSE` change, a `.gitignore` change, a workflow change, and the whole legacy `core/` + `drivers/` tree — into a commit whose message describes only the new package skeleton. That violates Global Constraint "only touch the paths a task names".
-- **D4:** Task 9's `git rm -r --cached core drivers remote.py __init__.py` works **only** in the current working tree, because not one of those ten paths exists at `HEAD` — all ten are staged additions. From a fresh worktree or clone of `HEAD` that command aborts with `fatal: pathspec 'core' did not match any files`. Worse, Task 9's `test_legacy_paths_are_gone` asserts `multiremote_fm.py` is absent, but `multiremote_fm.py` **does exist at `HEAD`** and no task in this plan deletes it. And if a worker fixes D5 so Task 1 stops committing the collateral, then Task 9's `git rm --cached` + `rm -rf` would permanently destroy ten never-committed files.
+```
+0d8d7bc (main, origin/main, refactor/clean-package)  Temporal commit before refactoring
+977c6ac (tag: 0.1)                                   Fix github cicd
+22 files changed, 5631 insertions(+), 762 deletions(-)
+```
 
-**Both resolve if a baseline commit of the user's staged work is made on a new branch first.** That is a git operation on the user's work, so it **requires the user's explicit consent** and has not been given. Until then: do not run any commit step, and do not run Task 9 Step 3.
+Verified contents: `core/` (4 files), `drivers/` (4 files), `remote.py` and the root `__init__.py` are **tracked**; `multiremote_fm.py` and `tests/test_ftp.py` are **deleted**; `README.md`, `.gitignore`, `LICENSE` and the publish workflow are modified. The commit also brought this plan and the spec under version control (22 paths in total).
 
-### OD-2 (BLOCKS green CI) — `ruff.toml` is untracked and git-ignored
+**No prerequisite task is needed.** Every hazard OD-1 recorded is discharged by that commit:
 
-`ruff.toml` (which carries `[format] quote-style = "single"`) is **not in version control**: untracked, absent from `HEAD`, and explicitly ignored at `.gitignore:166` — and that ignore line is itself part of the user's staged `.gitignore` change. Ruff's default is double quotes, so `ruff format --check` passes on this machine only and inverts to a permanent failure in CI and in every other clone.
+| Was | Now |
+|---|---|
+| **D5** — Task 1's `git commit` would sweep 20 unrelated staged paths into the wrong commit | The index is empty, so every `git add <paths> && git commit` in this plan commits exactly what it names. No collateral is possible. |
+| **D4a** — `git rm -r --cached core drivers remote.py __init__.py` (Task 9) would abort, because none of those paths existed at `HEAD` | All four are tracked at `HEAD` (verified with `git cat-file -e`), so **Task 9's `git rm -r --cached` and its test work as originally written, without modification**. |
+| **D4b** — Task 9's `test_legacy_paths_are_gone` asserts `multiremote_fm.py` is absent, but it existed at `HEAD` and no task deleted it | `0d8d7bc` deleted it. It is absent from `HEAD` and from disk, so that assertion is now both satisfiable and meaningful. |
+| **Destruction risk** — a corrected Task 1 would leave the ten legacy files never-committed, so Task 9's `rm -rf` would destroy them permanently | All ten are committed in `0d8d7bc` and recoverable from it. Task 9 is now safe. |
 
-**Candidate fix:** move the config into `pyproject.toml` as `[tool.ruff.format] quote-style = "single"` and drop the `ruff.toml` line from `.gitignore`. That edits the user's `.gitignore`, so it **requires the user's explicit consent** and has not been given. Until then, Task 11's `Ruff format check` step will fail in CI; leave it in place and do not paper over it.
+> **Sub-question — RESOLVED.** The controller cut branch `refactor/clean-package` from `0d8d7bc` on 2026-08-28, per the user's choice. `main` remains at `0d8d7bc`, untouched. All implementation happens on `refactor/clean-package`. Task 1 may now be dispatched.
+
+### OD-2 — ruff configuration: **RESOLVED (user approved 2026-08-28)**
+
+Approved resolution: move the format style into `pyproject.toml`, delete `ruff.toml`, and un-ignore it in `.gitignore`. Implemented as **Task 1 Step 4**.
+
+- `pyproject.toml` gains `[tool.ruff.format] quote-style = "single"` — version-controlled, so it applies to every clone and to CI.
+- `ruff.toml` is **deleted**. This is mandatory, not tidiness: ruff resolves `ruff.toml` **in preference to** `pyproject.toml`, so leaving it in place would silently override the new setting. Verified — with `ruff.toml` saying `double` and `pyproject.toml` saying `single`, `ruff format --check` on single-quoted source exits 1; after deleting `ruff.toml` it exits 0.
+- `.gitignore:166` (the line `ruff.toml`) is **removed**, so nothing re-hides a ruff config in future.
+- Nothing else is lost: the whole `[lint]` section of `ruff.toml` is commented out, so `quote-style` is the only live setting it carried.
+
+## Execution progress — resume at Task 7
+
+Recorded 2026-08-28. Tasks 1–6 are **complete and committed** on `refactor/clean-package`:
+
+```
+54a6345  Add FtpBackend with connection reuse, MLSD/NLST listing, honoured encoding   (Task 6)
+69ba184  Add LocalBackend and Local remote; fix empty-mask search returning zero files (Task 5)
+23a350d  Implement the five operations once in RemoteDriver with copy-on-write         (Task 4)
+3482faf  Add Backend ABC, Stat, and in-memory FakeBackend test double                  (Task 3)
+ad4c206  Add RemoteFile/RemoteFileSet with name-keyed dedup and ordered indexing       (Task 2)
+ead6c6a  Add multiremote_fm package skeleton, exceptions, real PEP 440 version, ruff config in pyproject (Task 1)
+0d8d7bc  Temporal commit before refactoring                                            (baseline, also on main)
+```
+
+State verified at that point: `venv/bin/pytest tests/ -q` → **81 passed, 3 failed**, and all three failures are in the *old* `tests/test_sftp.py` (`test_connect_with_password`, `test_connect_with_rsa`, `test_import_without_paramiko`) — precisely the file Task 7 rewrites. `ruff format --check` still reports 2 files to reformat, which is Task 12's job.
+
+**Next action: Task 7.** Do **not** re-run Tasks 1–6. Per the multi-owner-files constraint below, re-running any of them would restate `multiremote_fm/__init__.py`, `remotes.py` or `backends/__init__.py` from an earlier, smaller version and silently revert committed exports. The unchecked `- [ ]` boxes in Tasks 1–6 are historical; this section is the authority on where execution stands.
 
 ---
 
@@ -39,13 +74,14 @@ The index already holds **20 staged paths** of the user's uncommitted work befor
 - `paramiko>=3.2,<6` is an OPTIONAL extra named `sftp`. Never a hard runtime dependency.
 - No `X | Y` annotations outside modules carrying `from __future__ import annotations`. Use `typing.Optional` / `typing.Union`.
 - No `assert` used for control flow anywhere in `multiremote_fm/`. Raise `NothingToUploadException`, `TypeError`, `ValueError`, or `ConnectionError`.
-- Ruff config currently lives in `ruff.toml` (`[format] quote-style = "single"`); use single quotes in all package code. **See OD-2: that file is untracked and git-ignored, so this style is not reproducible outside this working directory and CI's format check will fail until OD-2 is resolved.**
+- Ruff config lives in `pyproject.toml` under `[tool.ruff.format]` with `quote-style = "single"`; use single quotes in all package code. `ruff.toml` is deleted in Task 1 Step 4 because it would otherwise take precedence over `pyproject.toml`.
 - The five operations `search`/`download`/`upload`/`move`/`delete` appear exactly once, in `multiremote_fm/driver.py`. `remotes.py` contains no protocol I/O and no operation bodies.
 - `RemoteDriver.with_path` / `with_mask` / `with_files` return a NEW `RemoteDriver` sharing the SAME backend instance. `move(dest)` returns a copy with `path=dest`. `upload` and `delete` return `self`.
 - `RemoteFile.with_driver` / `RemoteFileSet.with_driver` return `driver.with_files(...)` — a copy, never a mutation. `set_path` / `set_files` do not exist.
 - Default mask is `'*'`. Default path is `''`.
 - All commands use `venv/bin/pytest`, `venv/bin/ruff`, `venv/bin/mypy`, `venv/bin/python`.
-- Never run `git checkout`, `git stash`, or `git reset`. The working tree contains **20** staged uncommitted user paths; only touch the paths a task names. **See OD-1 before running any commit step.**
+- Never run `git checkout`, `git stash`, or `git reset`. Only touch the paths a task names. The working tree is **clean** as of the `0d8d7bc` baseline commit, so each task's `git add <paths> && git commit` commits exactly what it names.
+- **The working branch already exists and is checked out.** `refactor/clean-package` was cut from `0d8d7bc` by the controller; assume you are already on it and verify with `git branch --show-current` if unsure. **No task creates, switches, or deletes a branch** — you do not need to create or switch to it yourself. All commits land on `refactor/clean-package`; `main` stays at `0d8d7bc`.
 - **Multi-owner files.** `multiremote_fm/__init__.py`, `multiremote_fm/remotes.py` and `multiremote_fm/backends/__init__.py` are each fully restated by four to six different tasks, because every task must show its complete file. **The LAST task to touch each file is authoritative. Execute tasks in ascending order and never re-run an earlier task afterwards** — doing so silently reverts a later task's exports, and no test before Task 8 would catch it. Authoritative versions: `multiremote_fm/__init__.py` → Task 7; `multiremote_fm/remotes.py` → Task 7; `multiremote_fm/backends/__init__.py` → Task 7.
 
 ---
@@ -79,13 +115,14 @@ The index already holds **20 staged paths** of the user's uncommitted work befor
 
 | Path | Change |
 |------|--------|
-| `pyproject.toml:1-23` (whole file) | 3.10 floor, packages table, `sftp` + `dev` extras, `py.typed` package data, and a **real PEP 440 `version = "0.2.0"`** — the `{{VERSION_PLACEHOLDER}}` token is removed (Global Constraints). |
+| `pyproject.toml:1-23` (whole file) | 3.10 floor, packages table, `sftp` + `dev` extras, `py.typed` package data, a **real PEP 440 `version = "0.2.0"`** (the `{{VERSION_PLACEHOLDER}}` token is removed), and — per approved OD-2 — `[tool.ruff.format] quote-style = "single"`. |
 | `tests/test_remote_files.py:1-41` | Import `multiremote_fm`; add dedup and ordering assertions. |
 | `tests/test_local_dir.py:1-94` | Import `multiremote_fm`; count assertion in `test_search_common`; `test_download_searched` rewritten for copy-on-write. |
 | `tests/test_sftp.py:1-236` | Import `multiremote_fm`; fix the 3 failures; rewrite mutation-based assertions. |
 | `tests/_test_ftp.py:1-84` | Fix the broken `from file import ...`; stay opt-in via env vars. |
 | `README.md:3,15,36-42,220-222,343-348` | Drop the false "Memory Efficient" bullet, 3.9→3.10 badge, working dev-install block, SFTP extra install line, v0.2 changelog. `README.md:327-335` is left untouched. |
 | `.github/workflows/publish-to-pypi.yml:13,27,30` | `actions/checkout@main` → `@v4`; `::set-output` → `$GITHUB_OUTPUT`; token substitution → `version = ` line rewrite. |
+| `.gitignore:166` | Approved OD-2. Delete the single line `ruff.toml` so no ruff config can be hidden from version control again. |
 
 ### Deleted
 
@@ -96,6 +133,7 @@ The index already holds **20 staged paths** of the user's uncommitted work befor
 | `core/__init__.py`, `core/base.py`, `core/file.py`, `core/exceptions.py` | Superseded by `multiremote_fm/{files,driver,exceptions}.py`. |
 | `drivers/__init__.py`, `drivers/local.py`, `drivers/ftp.py`, `drivers/sftp.py` | ~491 duplicated lines superseded by `driver.py` + `backends/`. |
 | `__pycache__/`, `core/__pycache__/`, `drivers/__pycache__/` | Stale bytecode for deleted modules. |
+| `ruff.toml` | Approved OD-2. Ruff resolves `ruff.toml` **in preference to** `pyproject.toml`, so leaving it would override the new `[tool.ruff.format]` block. Deleted in Task 1 Step 4. |
 
 ### Sequencing note (deviation from the suggested spine, justified)
 
@@ -106,9 +144,9 @@ The suggested spine put `pyproject.toml` at step 8 and legacy deletion at step 9
 
 ---
 
-### Task 1: Packaging, editable install, and `exceptions.py`
+### Task 1: Packaging, ruff config, editable install, and `exceptions.py`
 
-Traces to spec §4.2 (S1 layout), §4.6 (S5 dead exceptions), §4.7 (S6 packaging).
+Traces to spec §4.2 (S1 layout), §4.6 (S5 dead exceptions), §4.7 (S6 packaging), and the approved **OD-2** (ruff config move).
 
 **Files:**
 - Create: `multiremote_fm/exceptions.py`
@@ -116,11 +154,13 @@ Traces to spec §4.2 (S1 layout), §4.6 (S5 dead exceptions), §4.7 (S6 packagin
 - Create: `multiremote_fm/py.typed`
 - Create: `tests/__init__.py`
 - Modify: `pyproject.toml:1-23` (whole file)
+- Modify: `.gitignore:166` (delete the line `ruff.toml`)
+- Delete: `ruff.toml`
 - Test: `tests/test_exceptions.py`
 
 **Interfaces:**
 - Consumes: nothing.
-- Produces: `multiremote_fm.exceptions.NothingToUploadException(Exception)`; `SSHPasswordRSAError(ValueError)`; `DownloadingError(Exception)` with `__init__(self, filename: str, message: str)` and attributes `.filename` / `.message`; `UploadingError(DownloadingError)`; `MovingError(DownloadingError)`. All five re-exported from `multiremote_fm`. `multiremote_fm.__version__ == '0.2.0'`.
+- Produces: `multiremote_fm.exceptions.NothingToUploadException(Exception)`; `SSHPasswordRSAError(ValueError)`; `DownloadingError(Exception)` with `__init__(self, filename: str, message: str)` and attributes `.filename` / `.message`; `UploadingError(DownloadingError)`; `MovingError(DownloadingError)`. All five re-exported from `multiremote_fm`. `multiremote_fm.__version__ == '0.2.0'`. Also produces the version-controlled ruff format config in `pyproject.toml`, on which every later `ruff format` / `ruff format --check` invocation depends.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -185,7 +225,7 @@ Expected: FAIL — collection error `ModuleNotFoundError: No module named 'multi
 
 - [ ] **Step 3: Write minimal implementation**
 
-Replace `pyproject.toml` entirely (note the real PEP 440 version — no magic token):
+Replace `pyproject.toml` entirely (note the real PEP 440 version — no magic token — and the `[tool.ruff.format]` block that replaces `ruff.toml` per approved OD-2):
 
 ```toml
 [build-system]
@@ -231,6 +271,12 @@ packages = ["multiremote_fm"]
 
 [tool.setuptools.package-data]
 multiremote_fm = ["py.typed"]
+
+[tool.ruff.format]
+# Migrated from the untracked, git-ignored ruff.toml (approved OD-2).
+# Ruff prefers ruff.toml over pyproject.toml, so ruff.toml must be deleted for this
+# to take effect - see Step 4.
+quote-style = "single"
 ```
 
 > `setuptools` is in the `dev` extra on purpose: Task 13's `test_c5_py_typed_in_built_wheel` runs `python -m build --no-isolation`, and Python 3.12+ virtualenvs no longer ship setuptools, so without this the wheel check would fail on the 3.12 and 3.13 CI legs.
@@ -315,7 +361,43 @@ Do not delete this file because it looks empty.
 """
 ```
 
-- [ ] **Step 4: Install the package editable and verify it succeeds**
+- [ ] **Step 4: Retire `ruff.toml` so the `pyproject.toml` ruff config takes effect**
+
+Resolves the approved **OD-2**. Three edits, all required together.
+
+First delete the file — ruff prefers `ruff.toml` over `pyproject.toml`, so while it exists the `[tool.ruff.format]` block added in Step 3 is silently ignored:
+
+```bash
+rm ruff.toml
+```
+
+Then remove its ignore line from `.gitignore`. The line is exactly `ruff.toml` at `.gitignore:166`, sitting in this block:
+
+```
+.helix/
+ruff.toml
+.zed/
+```
+
+Delete only the middle line, leaving:
+
+```
+.helix/
+.zed/
+```
+
+Verify all three parts landed — the config is now in version control, the override is gone, and single quotes still pass:
+
+```bash
+test -e ruff.toml && echo "FAIL: ruff.toml still present" || echo "ruff.toml deleted: OK"
+grep -c '^ruff\.toml$' .gitignore || echo "gitignore line removed: OK"
+venv/bin/python -c "import tomli; print(tomli.load(open('pyproject.toml','rb'))['tool']['ruff']['format'])"
+venv/bin/ruff format --check multiremote_fm
+```
+
+Expected: `ruff.toml deleted: OK`; `gitignore line removed: OK` (grep exits 1 with a count of 0); `{'quote-style': 'single'}`; and `2 files already formatted`. On Python 3.11+ use `tomllib` instead of `tomli` in the third command.
+
+- [ ] **Step 5: Install the package editable and verify it succeeds**
 
 Run: `venv/bin/pip install -e ".[dev]"`
 
@@ -327,17 +409,19 @@ cd /tmp && /Users/snake/Projects/multiremote-fm/venv/bin/python -c "import multi
 
 Expected: `0.2.0`. If pip reports `configuration error: project.version must be pep440`, the version line still holds the old token — fix `pyproject.toml` before continuing.
 
-- [ ] **Step 5: Run test to verify it passes**
+- [ ] **Step 6: Run test to verify it passes**
 
 Run: `venv/bin/pytest tests/test_exceptions.py -v`
 
 Expected: PASS — 6 passed.
 
-- [ ] **Step 6: Commit** — **GATED BY OD-1: do not run until the user has resolved the git strategy.** As written, `git commit` commits the entire index, which still holds the user's 20 staged paths.
+- [ ] **Step 7: Commit** — the index is clean as of baseline `0d8d7bc`, so this commits exactly the paths named.
 
 ```bash
-git add pyproject.toml multiremote_fm/__init__.py multiremote_fm/exceptions.py multiremote_fm/py.typed tests/__init__.py tests/test_exceptions.py && git commit -m "Add multiremote_fm package skeleton, exceptions, real PEP 440 version"
+git add pyproject.toml .gitignore multiremote_fm/__init__.py multiremote_fm/exceptions.py multiremote_fm/py.typed tests/__init__.py tests/test_exceptions.py && git commit -m "Add multiremote_fm package skeleton, exceptions, real PEP 440 version, ruff config in pyproject"
 ```
+
+> No `git rm` is needed for `ruff.toml`: it was never tracked (untracked and git-ignored), so deleting it from disk in Step 4 is the whole job. The `.gitignore` edit is what git records.
 
 > Multi-owner file: this task's `multiremote_fm/__init__.py` is superseded by Tasks 2, 4, 5, 6 and finally **Task 7**, which is authoritative.
 
@@ -583,7 +667,7 @@ Run: `venv/bin/pytest tests/test_remote_files.py tests/test_exceptions.py -v`
 
 Expected: PASS — 16 passed.
 
-- [ ] **Step 5: Commit** — **GATED BY OD-1.**
+- [ ] **Step 5: Commit** — the index is clean as of baseline `0d8d7bc`, so this commits exactly the paths named.
 
 ```bash
 git add multiremote_fm/files.py multiremote_fm/__init__.py tests/test_remote_files.py && git commit -m "Add RemoteFile/RemoteFileSet with name-keyed dedup and ordered indexing"
@@ -842,7 +926,7 @@ Run: `venv/bin/pytest tests/test_backend_base.py -v`
 
 Expected: PASS — 6 passed.
 
-- [ ] **Step 5: Commit** — **GATED BY OD-1.**
+- [ ] **Step 5: Commit** — the index is clean as of baseline `0d8d7bc`, so this commits exactly the paths named.
 
 ```bash
 git add multiremote_fm/backends pyproject.toml tests/fakes.py tests/test_backend_base.py && git commit -m "Add Backend ABC, Stat, and in-memory FakeBackend test double"
@@ -1314,7 +1398,7 @@ Run: `venv/bin/pytest tests/test_driver.py -v`
 
 Expected: PASS — 25 passed.
 
-- [ ] **Step 5: Commit** — **GATED BY OD-1.**
+- [ ] **Step 5: Commit** — the index is clean as of baseline `0d8d7bc`, so this commits exactly the paths named.
 
 ```bash
 git add multiremote_fm/driver.py multiremote_fm/__init__.py tests/test_driver.py && git commit -m "Implement the five operations once in RemoteDriver with copy-on-write"
@@ -1597,7 +1681,7 @@ Run: `venv/bin/pytest tests/test_local_dir.py -v`
 
 Expected: PASS — 10 passed.
 
-- [ ] **Step 5: Commit** — **GATED BY OD-1.**
+- [ ] **Step 5: Commit** — the index is clean as of baseline `0d8d7bc`, so this commits exactly the paths named.
 
 ```bash
 git add multiremote_fm/backends/local.py multiremote_fm/backends/__init__.py multiremote_fm/remotes.py multiremote_fm/__init__.py tests/test_local_dir.py && git commit -m "Add LocalBackend and Local remote; fix empty-mask search returning zero files"
@@ -2077,7 +2161,7 @@ Run: `venv/bin/pytest tests/test_ftp_backend.py -v`
 
 Expected: PASS — 15 passed.
 
-- [ ] **Step 5: Commit** — **GATED BY OD-1.**
+- [ ] **Step 5: Commit** — the index is clean as of baseline `0d8d7bc`, so this commits exactly the paths named.
 
 ```bash
 git add multiremote_fm/backends/ftp.py multiremote_fm/backends/__init__.py multiremote_fm/remotes.py multiremote_fm/__init__.py tests/test_ftp_backend.py tests/_test_ftp.py && git commit -m "Add FtpBackend with connection reuse, MLSD/NLST listing, honoured encoding"
@@ -2663,7 +2747,7 @@ Run: `venv/bin/pytest tests/test_sftp.py -v`
 
 Expected: PASS — 18 passed, including `test_import_without_paramiko`, `test_connect_with_password`, `test_connect_with_rsa`.
 
-- [ ] **Step 5: Commit** — **GATED BY OD-1.**
+- [ ] **Step 5: Commit** — the index is clean as of baseline `0d8d7bc`, so this commits exactly the paths named.
 
 ```bash
 git add multiremote_fm/backends/sftp.py multiremote_fm/backends/__init__.py multiremote_fm/remotes.py multiremote_fm/__init__.py tests/test_sftp.py && git commit -m "Add SftpBackend with deferred annotations, actionable ImportError, honoured timeout"
@@ -2824,7 +2908,7 @@ Run: `venv/bin/pytest tests/test_public_api.py -v`
 
 Expected: PASS — 5 passed.
 
-- [ ] **Step 5: Commit** — **GATED BY OD-1.**
+- [ ] **Step 5: Commit** — the index is clean as of baseline `0d8d7bc`, so this commits exactly the paths named.
 
 ```bash
 git add tests/test_public_api.py multiremote_fm/__init__.py && git commit -m "Lock the frozen public export surface with a regression test"
@@ -2895,9 +2979,9 @@ Run: `venv/bin/pytest tests/test_legacy_removed.py -v`
 
 Expected: FAIL — `test_legacy_paths_are_gone` reports `__init__.py still exists`. (`test_package_still_imports` passes already; it is a guard against collateral damage from Step 3, not a red-first test.)
 
-- [ ] **Step 3: Write minimal implementation** — **GATED BY OD-1: do not run until the user has resolved the git strategy.**
+- [ ] **Step 3: Write minimal implementation**
 
-All ten legacy paths exist **only as staged additions**; none exists at `HEAD`. `git rm --cached` un-stages them and `rm -rf` then removes them from disk, so if the user's staged work has not been committed to a baseline first, this step **permanently destroys ten never-committed files**. Also note `multiremote_fm.py` exists at `HEAD`, is already staged-deleted and absent from disk in this working tree, and no step here removes it — see OD-1.
+Safe as written, unchanged from the original plan. All four paths are tracked at `HEAD` since baseline `0d8d7bc`, so `git rm --cached` matches them, and every deleted file stays recoverable from that commit. `multiremote_fm.py` was deleted by the same baseline commit and is absent from both `HEAD` and disk, which is what makes the `test_legacy_paths_are_gone` assertion on it meaningful rather than vacuous.
 
 ```bash
 git rm -r --cached core drivers remote.py __init__.py
@@ -2910,7 +2994,7 @@ Run: `venv/bin/pytest tests/test_legacy_removed.py -v && venv/bin/pytest tests/ 
 
 Expected: PASS — 2 passed for the new file; the full run passes with `tests/_test_ftp.py` uncollected (leading underscore) and every other test green.
 
-- [ ] **Step 5: Commit** — **GATED BY OD-1.**
+- [ ] **Step 5: Commit** — the index is clean as of baseline `0d8d7bc`, so this commits exactly the paths named.
 
 ```bash
 git add -A core drivers remote.py __init__.py tests/test_legacy_removed.py && git commit -m "Delete the legacy core/, drivers/, remote.py and root __init__.py"
@@ -3083,7 +3167,7 @@ Run: `venv/bin/pytest tests/test_readme_claims.py -v`
 
 Expected: PASS — 6 passed.
 
-- [ ] **Step 5: Commit** — **GATED BY OD-1.**
+- [ ] **Step 5: Commit** — the index is clean as of baseline `0d8d7bc`, so this commits exactly the paths named.
 
 ```bash
 git add README.md tests/test_readme_claims.py && git commit -m "Correct README: drop false memory claim, 3.10 floor, sftp extra, v0.2 changelog"
@@ -3243,7 +3327,7 @@ Run: `venv/bin/pytest tests/test_workflows.py -v`
 
 Expected: PASS — 3 passed.
 
-- [ ] **Step 5: Commit** — **GATED BY OD-1.**
+- [ ] **Step 5: Commit** — the index is clean as of baseline `0d8d7bc`, so this commits exactly the paths named.
 
 ```bash
 git add .github/workflows/test.yml .github/workflows/publish-to-pypi.yml tests/test_workflows.py && git commit -m "Add test/lint CI workflow and fix deprecated publish workflow directives"
@@ -3275,7 +3359,7 @@ venv/bin/ruff check multiremote_fm tests ; venv/bin/ruff format --check multirem
 
 Run: `venv/bin/ruff check multiremote_fm tests && venv/bin/ruff format --check multiremote_fm tests && venv/bin/mypy multiremote_fm`
 
-Expected: this is a pass/fail gate, not a red-first step. **Pass condition: all three commands exit 0.** Record the actual findings; do not go looking for predicted ones. If ruff reports import-sort order in the rewritten `__init__.py` files or double quotes left in a copied block, fix them in Step 3. Note that CI's `ruff format --check` step will fail regardless until **OD-2** is resolved, because `ruff.toml` is not in version control; that is a known open decision, not a Task 12 finding.
+Expected: this is a pass/fail gate, not a red-first step. **Pass condition: all three commands exit 0.** Record the actual findings; do not go looking for predicted ones. If ruff reports import-sort order in the rewritten `__init__.py` files or double quotes left in a copied block, fix them in Step 3. The single-quote style comes from `[tool.ruff.format]` in `pyproject.toml` (Task 1 Step 4); if `ruff format --check` unexpectedly wants double quotes, check that `ruff.toml` was actually deleted — it takes precedence over `pyproject.toml`.
 
 - [ ] **Step 3: Write minimal implementation**
 
@@ -3294,7 +3378,7 @@ Run: `venv/bin/ruff check multiremote_fm tests && venv/bin/ruff format --check m
 
 Expected: PASS — `All checks passed!`, `N files already formatted`, `Success: no issues found`, and every test green.
 
-- [ ] **Step 5: Commit** — **GATED BY OD-1.**
+- [ ] **Step 5: Commit** — the index is clean as of baseline `0d8d7bc`, so this commits exactly the paths named.
 
 ```bash
 git add -A multiremote_fm tests && git commit -m "Make ruff and mypy clean across the package and tests"
@@ -3651,7 +3735,7 @@ Run: `venv/bin/pytest tests/ -v && venv/bin/ruff check multiremote_fm tests && v
 
 Expected: PASS — every test green, ruff clean, mypy clean.
 
-- [ ] **Step 5: Commit** — **GATED BY OD-1.**
+- [ ] **Step 5: Commit** — the index is clean as of baseline `0d8d7bc`, so this commits exactly the paths named.
 
 ```bash
 git add tests/test_acceptance.py && git commit -m "Add executable acceptance checks for all 20 spec criteria"
@@ -3714,4 +3798,4 @@ Searched this plan for `TBD`, `TODO`, `implement later`, `add appropriate error 
 
 ### 4. Pre-flight repair pass
 
-An independent pre-flight scan raised 23 findings. Repaired here: A1, B1, B3, B4, B5 (in the spec), C1–C11. Recorded as blocked-pending-user in **Open Decisions**: OD-1 (D4 + D5, git strategy) and OD-2 (A2 + B2, `ruff.toml` untracked and ignored). D0–D3 are facts, not defects, and needed no change. Every commit step in the plan now carries an explicit OD-1 gate.
+An independent pre-flight scan raised 23 findings. Repaired in this document: A1, B1, B3, B4, B5 (in the spec), C1–C11. The two findings that needed a human decision were both resolved on 2026-08-28 and are recorded under **Resolved Decisions**: OD-1 (D4 + D5) was resolved by the repo owner committing the baseline directly as `0d8d7bc`, which discharged every hazard without any prerequisite task, and its branch sub-question was then closed by cutting `refactor/clean-package` from that baseline; OD-2 (A2 + B2) was approved and is implemented as Task 1 Step 4, moving the ruff format style into `pyproject.toml` and deleting `ruff.toml`. D0–D3 are facts, not defects, and needed no change.
