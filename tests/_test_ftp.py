@@ -1,7 +1,7 @@
-import unittest
 import os
-from file import RemoteFile, RemoteFileSet
-from drivers.ftp import FTP, FTPS
+import unittest
+
+from multiremote_fm import FTP, FTPS, RemoteFile, RemoteFileSet
 
 
 class TestRemoteFTP(unittest.TestCase):

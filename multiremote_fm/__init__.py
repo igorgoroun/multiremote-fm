@@ -9,7 +9,7 @@ from .exceptions import (
     UploadingError,
 )
 from .files import RemoteFile, RemoteFileSet
-from .remotes import Local
+from .remotes import FTP, FTPS, Local
 
 __version__ = '0.2.0'
 
@@ -19,6 +19,8 @@ __all__ = [
     'BaseDriver',
     'RemoteDriver',
     'Local',
+    'FTP',
+    'FTPS',
     'NothingToUploadException',
     'SSHPasswordRSAError',
     'DownloadingError',
