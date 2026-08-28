@@ -10,7 +10,7 @@
 
 ## Resolved Decisions
 
-Both decisions from the pre-flight scan are fully closed, along with OD-1's branch sub-question. OD-1 was resolved by the repo owner committing the baseline directly; the working branch `refactor/clean-package` has since been cut from that baseline and is checked out; OD-2 was approved by the user and is implemented in **Task 1 Step 4**. There is no prerequisite task and nothing blocks execution — start at Task 1.
+Both decisions from the pre-flight scan are fully closed, along with OD-1's branch sub-question. OD-1 was resolved by the repo owner committing the baseline directly; the working branch `refactor/clean-package` has since been cut from that baseline and is checked out; OD-2 was approved by the user and is implemented in **Task 1 Step 4**. There is no prerequisite task and nothing blocks execution. See "Execution progress" below for where the plan currently stands.
 
 ### OD-1 — the previously-uncommitted work: **RESOLVED — by the repo owner directly, 2026-08-28**
 
