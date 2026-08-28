@@ -29,12 +29,12 @@ class RemoteFile:
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary representation."""
-        return dict(
-            name=self.name,
-            content=self.content,
-            size=self.size,
-            mimetype=self.mimetype,
-        )
+        return {
+            'name': self.name,
+            'content': self.content,
+            'size': self.size,
+            'mimetype': self.mimetype,
+        }
 
     def with_driver(self, driver: 'BaseDriver') -> 'BaseDriver':
         """Return a copy of `driver` configured to work with this file."""
@@ -52,7 +52,7 @@ class RemoteFile:
         return self.name
 
     def __repr__(self) -> str:
-        return '{0}({1})'.format(self.__class__.__name__, self.name)
+        return f'{self.__class__.__name__}({self.name})'
 
 
 class RemoteFileSet:
@@ -75,7 +75,7 @@ class RemoteFileSet:
         for file in files:
             if not isinstance(file, RemoteFile):
                 raise TypeError(
-                    'RemoteFileSet accepts RemoteFile objects, got {0}'.format(type(file).__name__)
+                    f'RemoteFileSet accepts RemoteFile objects, got {type(file).__name__}'
                 )
         for file in files:
             self.__files[file.name] = file
@@ -97,4 +97,4 @@ class RemoteFileSet:
         return self.__repr__()
 
     def __repr__(self) -> str:
-        return '{0}{1}'.format(self.__class__.__name__, tuple(self.__files.values()))
+        return f'{self.__class__.__name__}{tuple(self.__files.values())}'

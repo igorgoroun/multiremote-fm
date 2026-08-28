@@ -95,7 +95,9 @@ class SFTP(RemoteDriver):
             )
         )
 
-    def __enter__(self) -> 'SFTP':
+    def __enter__(self) -> 'SFTP':  # noqa: PYI034
+        # typing_extensions.Self would add an undeclared runtime dependency;
+        # the project has none by design
         self.backend.connect()
         return self
 

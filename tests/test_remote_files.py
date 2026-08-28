@@ -20,7 +20,9 @@ class TestRemoteFileObjects(unittest.TestCase):
 
     def test_mimetype_guessed_and_fallback(self):
         self.assertEqual(RemoteFile('doc.pdf').mimetype, 'application/pdf')
-        self.assertEqual(RemoteFile('blob.unknownext').mimetype, 'application/octet-stream')
+        self.assertEqual(
+            RemoteFile('blob.unknownext').mimetype, 'application/octet-stream'
+        )
 
     def test_to_dict(self):
         f = RemoteFile('a.txt', b'hi', 2)
@@ -70,13 +72,13 @@ class TestRemoteFileObjects(unittest.TestCase):
         fileset = RemoteFileSet(RemoteFile('a.txt'))
         self.assertEqual(repr(fileset), 'RemoteFileSet(RemoteFile(a.txt),)')
         self.assertEqual(str(fileset), repr(fileset))
+
     def test_fileset_add_is_atomic_on_type_error(self):
         fileset = RemoteFileSet(RemoteFile('existing.txt'))
         with self.assertRaises(TypeError):
             fileset.add(RemoteFile('new.txt'), 'not-a-file')
         self.assertEqual(len(fileset), 1)
         self.assertEqual([f.name for f in fileset], ['existing.txt'])
-
 
 
 if __name__ == '__main__':

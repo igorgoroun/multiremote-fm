@@ -8,7 +8,7 @@ import ftplib
 import logging
 import posixpath
 from io import BytesIO
-from typing import List, Optional
+from typing import List, Optional, cast
 
 from .base import Backend, Stat
 
@@ -52,7 +52,7 @@ class FtpBackend(Backend):
         client.connect(host=self.host, port=self.port, timeout=self.response_timeout)
         client.login(user=self.login, passwd=self.password)
         if self.tls:
-            client.prot_p()
+            cast(ftplib.FTP_TLS, client).prot_p()
         self._ftp = client
 
     def close(self) -> None:
@@ -87,7 +87,9 @@ class FtpBackend(Backend):
             if entry_type in ('dir', 'cdir', 'pdir'):
                 entries.append(Stat(name=name, size=0, is_dir=True))
                 continue
-            entries.append(Stat(name=name, size=int(facts.get('size') or 0), is_dir=False))
+            entries.append(
+                Stat(name=name, size=int(facts.get('size') or 0), is_dir=False)
+            )
         return entries
 
     def _list_nlst(self, client: ftplib.FTP, base: str) -> List[Stat]:
@@ -107,12 +109,12 @@ class FtpBackend(Backend):
     def read(self, path: str) -> bytes:
         client = self._client()
         buffer = BytesIO()
-        client.retrbinary('RETR {0}'.format(path), buffer.write, blocksize=32768)
+        client.retrbinary(f'RETR {path}', buffer.write, blocksize=32768)
         return buffer.getvalue()
 
     def write(self, path: str, data: bytes) -> None:
         client = self._client()
-        client.storbinary('STOR {0}'.format(path), BytesIO(data))
+        client.storbinary(f'STOR {path}', BytesIO(data))
 
     def rename(self, src: str, dst: str) -> None:
         self._client().rename(src, dst)

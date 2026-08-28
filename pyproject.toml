@@ -47,3 +47,15 @@ multiremote_fm = ["py.typed"]
 # Ruff prefers ruff.toml over pyproject.toml, so ruff.toml must be deleted for this
 # to take effect - see Step 4.
 quote-style = "single"
+[tool.ruff.lint]
+# UP045/UP006/UP035 push Optional[X]/List[X]/Dict[X] toward bare `X | None` and lowercase
+# builtin generics. This project deliberately keeps typing.Optional/List/Dict/Set/Union
+# everywhere except sftp.py (which has `from __future__ import annotations` for a
+# documented reason) -- see the Global Constraint on X | Y annotations.
+ignore = ["UP006", "UP007", "UP035", "UP045"]
+
+
+[tool.mypy]
+[[tool.mypy.overrides]]
+module = "paramiko"
+ignore_missing_imports = true

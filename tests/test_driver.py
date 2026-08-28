@@ -7,7 +7,6 @@ from multiremote_fm import (
     RemoteFile,
     RemoteFileSet,
 )
-
 from tests.fakes import FakeBackend
 
 
@@ -59,7 +58,9 @@ class TestRemoteDriverOperations(unittest.TestCase):
         self.assertIn('data/a.txt', self.fake.tree)
 
     def test_upload_writes_every_file(self):
-        fileset = RemoteFileSet(RemoteFile('u1.txt', b'one', 3), RemoteFile('u2.txt', b'two', 3))
+        fileset = RemoteFileSet(
+            RemoteFile('u1.txt', b'one', 3), RemoteFile('u2.txt', b'two', 3)
+        )
         target = self.driver.with_path('out').with_files(fileset)
         self.assertIs(target.upload(), target)
         self.assertEqual(self.fake.tree['out/u1.txt'], b'one')
@@ -132,7 +133,9 @@ class TestRemoteDriverCopyOnWrite(unittest.TestCase):
         self.assertEqual(len(self.driver.files), 0)
 
     def test_copies_share_one_backend_instance(self):
-        chain = self.driver.with_path('a').with_mask('*.txt').with_files(RemoteFileSet())
+        chain = (
+            self.driver.with_path('a').with_mask('*.txt').with_files(RemoteFileSet())
+        )
         self.assertIs(chain.backend, self.fake)
         self.assertIs(self.driver.backend, self.fake)
 

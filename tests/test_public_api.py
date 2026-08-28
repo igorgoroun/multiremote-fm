@@ -89,10 +89,10 @@ class TestPublicApi(unittest.TestCase):
                 for op in ops:
                     found = source.count(op + '(')
                     if found and filename != 'driver.py':
-                        self.fail('{0} declares {1}'.format(full, op))
+                        self.fail(f'{full} declares {op}')
                     counts[op] += found
         for op, count in counts.items():
-            self.assertEqual(count, 2, '{0} declared {1} times'.format(op, count))
+            self.assertEqual(count, 2, f'{op} declared {count} times')
 
 
 if __name__ == '__main__':

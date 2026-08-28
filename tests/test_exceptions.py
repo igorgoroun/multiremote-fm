@@ -27,8 +27,12 @@ class TestExceptions(unittest.TestCase):
         self.assertEqual(str(err), 'Cannot download file a.txt: boom')
 
     def test_uploading_and_moving_error_messages(self):
-        self.assertEqual(str(UploadingError('a.txt', 'boom')), 'Cannot upload file a.txt: boom')
-        self.assertEqual(str(MovingError('a.txt', 'boom')), 'Cannot move file a.txt: boom')
+        self.assertEqual(
+            str(UploadingError('a.txt', 'boom')), 'Cannot upload file a.txt: boom'
+        )
+        self.assertEqual(
+            str(MovingError('a.txt', 'boom')), 'Cannot move file a.txt: boom'
+        )
         self.assertIsInstance(UploadingError('a', 'b'), DownloadingError)
         self.assertIsInstance(MovingError('a', 'b'), DownloadingError)
 

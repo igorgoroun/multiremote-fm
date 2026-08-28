@@ -1,7 +1,6 @@
 import unittest
 
 from multiremote_fm.backends import Backend, Stat
-
 from tests.fakes import FakeBackend
 
 
@@ -21,7 +20,9 @@ class TestBackendBase(unittest.TestCase):
     def test_backend_declares_exactly_the_seven_primitives(self):
         self.assertEqual(
             Backend.__abstractmethods__,
-            frozenset({'connect', 'close', 'list', 'read', 'write', 'rename', 'remove'}),
+            frozenset(
+                {'connect', 'close', 'list', 'read', 'write', 'rename', 'remove'}
+            ),
         )
 
     def test_fake_backend_is_a_backend(self):
@@ -31,8 +32,14 @@ class TestBackendBase(unittest.TestCase):
         fake = FakeBackend({'a.txt': b'1', 'sub/b.txt': b'22'})
         fake.dirs.add('sub')
         top = sorted(fake.list('.'), key=lambda s: s.name)
-        self.assertEqual([(s.name, s.size, s.is_dir) for s in top], [('a.txt', 1, False), ('sub', 0, True)])
-        self.assertEqual([(s.name, s.size, s.is_dir) for s in fake.list('sub')], [('b.txt', 2, False)])
+        self.assertEqual(
+            [(s.name, s.size, s.is_dir) for s in top],
+            [('a.txt', 1, False), ('sub', 0, True)],
+        )
+        self.assertEqual(
+            [(s.name, s.size, s.is_dir) for s in fake.list('sub')],
+            [('b.txt', 2, False)],
+        )
 
     def test_fake_backend_primitives_round_trip(self):
         fake = FakeBackend()

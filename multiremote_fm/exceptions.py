@@ -18,14 +18,14 @@ class DownloadingError(Exception):
         self.message = message
 
     def __str__(self) -> str:
-        return 'Cannot download file {0}: {1}'.format(self.filename, self.message)
+        return f'Cannot download file {self.filename}: {self.message}'
 
 
 class UploadingError(DownloadingError):
     def __str__(self) -> str:
-        return 'Cannot upload file {0}: {1}'.format(self.filename, self.message)
+        return f'Cannot upload file {self.filename}: {self.message}'
 
 
 class MovingError(DownloadingError):
     def __str__(self) -> str:
-        return 'Cannot move file {0}: {1}'.format(self.filename, self.message)
+        return f'Cannot move file {self.filename}: {self.message}'

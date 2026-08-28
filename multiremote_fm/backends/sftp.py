@@ -55,16 +55,22 @@ class SftpBackend(Backend):
         try:
             return paramiko.RSAKey.from_private_key(StringIO(self.rsa.decode('utf-8')))
         except ValueError as exc:
-            raise ValueError('Invalid RSA key: {0}'.format(exc)) from exc
+            raise ValueError(f'Invalid RSA key: {exc}') from exc
 
     def connect(self) -> None:
-        if self._sftp is not None and self._transport is not None and self._transport.is_active():
+        if (
+            self._sftp is not None
+            and self._transport is not None
+            and self._transport.is_active()
+        ):
             return
         self.close()
         rsa_key = self._load_key()
         # paramiko 5.0.0's Transport.connect takes no timeout, so response_timeout is
         # applied to the TCP connect and to the banner/auth phases instead.
-        sock = socket.create_connection((self.host, self.port), timeout=self.response_timeout)
+        sock = socket.create_connection(
+            (self.host, self.port), timeout=self.response_timeout
+        )
         sock.settimeout(None)
         transport = paramiko.Transport(sock)
         transport.set_log_channel(__name__)
@@ -86,14 +92,16 @@ class SftpBackend(Backend):
         if self._sftp is not None:
             try:
                 self._sftp.close()
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
+                # Cleanup/teardown must swallow any exception to guarantee finally resets state
                 _logger.warning('Error closing SFTP client: %s', exc)
             finally:
                 self._sftp = None
         if self._transport is not None:
             try:
                 self._transport.close()
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
+                # Cleanup/teardown must swallow any exception to guarantee finally resets state
                 _logger.warning('Error closing transport: %s', exc)
             finally:
                 self._transport = None

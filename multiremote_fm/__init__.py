@@ -14,17 +14,17 @@ from .remotes import FTP, FTPS, SFTP, Local
 __version__ = '0.2.0'
 
 __all__ = [
-    'RemoteFile',
-    'RemoteFileSet',
-    'BaseDriver',
-    'RemoteDriver',
-    'Local',
     'FTP',
     'FTPS',
     'SFTP',
-    'NothingToUploadException',
-    'SSHPasswordRSAError',
+    'BaseDriver',
     'DownloadingError',
-    'UploadingError',
+    'Local',
     'MovingError',
+    'NothingToUploadException',
+    'RemoteDriver',
+    'RemoteFile',
+    'RemoteFileSet',
+    'SSHPasswordRSAError',
+    'UploadingError',
 ]

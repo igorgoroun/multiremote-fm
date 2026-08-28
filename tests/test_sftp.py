@@ -13,7 +13,9 @@ class TestSFTP(unittest.TestCase):
     def setUp(self) -> None:
         self.paramiko_patcher = patch('multiremote_fm.backends.sftp.paramiko')
         self.mock_paramiko = self.paramiko_patcher.start()
-        self.socket_patcher = patch('multiremote_fm.backends.sftp.socket.create_connection')
+        self.socket_patcher = patch(
+            'multiremote_fm.backends.sftp.socket.create_connection'
+        )
         self.mock_create_connection = self.socket_patcher.start()
         self.mock_socket = MagicMock(spec=socket.socket)
         self.mock_create_connection.return_value = self.mock_socket
@@ -29,7 +31,12 @@ class TestSFTP(unittest.TestCase):
         self.paramiko_patcher.stop()
 
     def _sftp(self, **overrides):
-        kwargs = dict(host='test.com', port=22, login='testuser', password='testpass')
+        kwargs = {
+            'host': 'test.com',
+            'port': 22,
+            'login': 'testuser',
+            'password': 'testpass',
+        }
         kwargs.update(overrides)
         return SFTP(**kwargs)
 
@@ -73,7 +80,9 @@ class TestSFTP(unittest.TestCase):
         sftp = self._sftp(response_timeout=30)
         sftp.backend.connect()
 
-        self.mock_create_connection.assert_called_once_with(('test.com', 22), timeout=30)
+        self.mock_create_connection.assert_called_once_with(
+            ('test.com', 22), timeout=30
+        )
         self.mock_paramiko.Transport.assert_called_once_with(self.mock_socket)
         self.assertEqual(self.mock_transport.banner_timeout, 30)
         self.assertEqual(self.mock_transport.auth_timeout, 30)
@@ -82,7 +91,9 @@ class TestSFTP(unittest.TestCase):
             pkey=None,
             password='testpass',
         )
-        self.mock_paramiko.SFTPClient.from_transport.assert_called_once_with(self.mock_transport)
+        self.mock_paramiko.SFTPClient.from_transport.assert_called_once_with(
+            self.mock_transport
+        )
 
     def test_connect_with_rsa(self):
         mock_rsa_key = Mock()
@@ -92,7 +103,9 @@ class TestSFTP(unittest.TestCase):
         sftp.backend.connect()
 
         self.mock_paramiko.RSAKey.from_private_key.assert_called_once()
-        self.mock_create_connection.assert_called_once_with(('test.com', 22), timeout=45)
+        self.mock_create_connection.assert_called_once_with(
+            ('test.com', 22), timeout=45
+        )
         self.mock_transport.connect.assert_called_once_with(
             username='testuser',
             pkey=mock_rsa_key,
@@ -146,7 +159,9 @@ class TestSFTP(unittest.TestCase):
             self.assertEqual(file.content, b'')
 
     def test_download_files(self):
-        self.mock_sftp.listdir_attr.return_value = self._listing(('test.txt', 11, 33188))
+        self.mock_sftp.listdir_attr.return_value = self._listing(
+            ('test.txt', 11, 33188)
+        )
 
         def mock_getfo(remotepath, fl):
             self.assertEqual(remotepath, '/remote/path/test.txt')
@@ -179,8 +194,12 @@ class TestSFTP(unittest.TestCase):
 
         self.assertIs(result, target)
         self.assertEqual(self.mock_sftp.putfo.call_count, 2)
-        uploaded = {call.kwargs['remotepath'] for call in self.mock_sftp.putfo.call_args_list}
-        self.assertEqual(uploaded, {'/upload/path/upload1.txt', '/upload/path/upload2.txt'})
+        uploaded = {
+            call.kwargs['remotepath'] for call in self.mock_sftp.putfo.call_args_list
+        }
+        self.assertEqual(
+            uploaded, {'/upload/path/upload1.txt', '/upload/path/upload2.txt'}
+        )
 
     def test_move_files(self):
         fileset = RemoteFileSet(RemoteFile(name='move1.txt', content=b'', size=0))

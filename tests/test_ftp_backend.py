@@ -21,7 +21,12 @@ class TestFtpBackend(unittest.TestCase):
         self.ftplib_patcher.stop()
 
     def _backend(self, **overrides):
-        kwargs = dict(host='ftp.example.com', port=21, login='user', password='pass')
+        kwargs = {
+            'host': 'ftp.example.com',
+            'port': 21,
+            'login': 'user',
+            'password': 'pass',
+        }
         kwargs.update(overrides)
         return FtpBackend(**kwargs)
 
@@ -70,7 +75,9 @@ class TestFtpBackend(unittest.TestCase):
         ]
         backend = self._backend()
         entries = sorted(backend.list('/incoming'), key=lambda s: s.name)
-        self.mock_client.mlsd.assert_called_once_with('/incoming', facts=['type', 'size'])
+        self.mock_client.mlsd.assert_called_once_with(
+            '/incoming', facts=['type', 'size']
+        )
         self.mock_client.nlst.assert_not_called()
         self.assertEqual(
             [(e.name, e.size, e.is_dir) for e in entries],
@@ -100,7 +107,9 @@ class TestFtpBackend(unittest.TestCase):
         self.mock_client.size.return_value = 3
         backend = self._backend()
         entries = list(backend.list('/incoming'))
-        self.assertEqual([(e.name, e.size, e.is_dir) for e in entries], [('a.txt', 3, False)])
+        self.assertEqual(
+            [(e.name, e.size, e.is_dir) for e in entries], [('a.txt', 3, False)]
+        )
         self.mock_client.size.assert_called_once_with('/incoming/a.txt')
 
     def test_read_retrieves_binary_content(self):
@@ -153,7 +162,9 @@ class TestFtpRemotes(unittest.TestCase):
 
     def test_ftp_upload_uses_the_same_backend_instance(self):
         ftp = FTP(host='ftp.example.com', port=21, login='user', password='pass')
-        target = ftp.with_path('/out').with_files(RemoteFileSet(RemoteFile('a.txt', b'x', 1)))
+        target = ftp.with_path('/out').with_files(
+            RemoteFileSet(RemoteFile('a.txt', b'x', 1))
+        )
         self.assertIs(target.backend, ftp.backend)
         target.upload()
         self.assertEqual(self.mock_client.storbinary.call_count, 1)

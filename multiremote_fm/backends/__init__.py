@@ -7,8 +7,8 @@ from .sftp import SftpBackend
 
 __all__ = [
     'Backend',
-    'Stat',
-    'LocalBackend',
     'FtpBackend',
+    'LocalBackend',
     'SftpBackend',
+    'Stat',
 ]

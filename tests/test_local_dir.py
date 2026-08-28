@@ -27,7 +27,16 @@ class TestLocalDir(unittest.TestCase):
         for file_path in glob.glob(os.path.join(self.local_dir_path, '*')):
             if os.path.isfile(file_path):
                 os.unlink(file_path)
-        self.created = ['f1.xml', 'f2.csv', 'f3.xml', 'f4.doc', 'f5.xlsx', 'f6.doc', 'f7.jpg', 'f8.c']
+        self.created = [
+            'f1.xml',
+            'f2.csv',
+            'f3.xml',
+            'f4.doc',
+            'f5.xlsx',
+            'f6.doc',
+            'f7.jpg',
+            'f8.c',
+        ]
         for name in self.created:
             with open(os.path.join(self.local_dir_path, name), mode='w') as handle:
                 handle.write(name)
@@ -73,7 +82,11 @@ class TestLocalDir(unittest.TestCase):
             self.assertIsNotNone(file.mimetype)
 
     def test_download_unlink(self):
-        files = self.driver.with_path(self.local_dir_path).with_mask('*.jpg').download(unlink=True)
+        files = (
+            self.driver.with_path(self.local_dir_path)
+            .with_mask('*.jpg')
+            .download(unlink=True)
+        )
         self.assertEqual(len(files), 1)
         deleted = self.driver.with_path(self.local_dir_path).with_mask('*.jpg').search()
         self.assertEqual(len(deleted), 0)

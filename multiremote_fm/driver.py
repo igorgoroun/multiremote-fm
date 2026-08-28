@@ -129,9 +129,7 @@ class RemoteDriver(BaseDriver):
             raise NothingToUploadException()
         for file in self._files:
             if not isinstance(file, RemoteFile):
-                raise TypeError(
-                    'Expected RemoteFile, got {0}'.format(type(file).__name__)
-                )
+                raise TypeError(f'Expected RemoteFile, got {type(file).__name__}')
         return self._files
 
     def search(self, **kwargs: object) -> RemoteFileSet:
@@ -186,7 +184,7 @@ class RemoteDriver(BaseDriver):
         return self
 
     def __str__(self) -> str:
-        return 'RemoteDriver({0}, {1})'.format(self._path, self._mask)
+        return f'RemoteDriver({self._path}, {self._mask})'
 
     def __repr__(self) -> str:
-        return 'RemoteDriver(path={0}, mask={1})'.format(self._path, self._mask)
+        return f'RemoteDriver(path={self._path}, mask={self._mask})'

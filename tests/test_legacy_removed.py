@@ -17,7 +17,7 @@ class TestLegacyTreeRemoved(unittest.TestCase):
         ):
             self.assertFalse(
                 os.path.exists(os.path.join(self.repo_root, relative)),
-                '{0} still exists'.format(relative),
+                f'{relative} still exists',
             )
 
     # A `test_legacy_modules_are_not_importable` check was deliberately NOT written here:
@@ -27,7 +27,14 @@ class TestLegacyTreeRemoved(unittest.TestCase):
     # verifies nothing. The filesystem check above is the real one.
 
     def test_package_still_imports(self):
-        from multiremote_fm import FTP, FTPS, SFTP, Local, RemoteFile, RemoteFileSet  # noqa: F401
+        from multiremote_fm import (  # noqa: F401
+            FTP,
+            FTPS,
+            SFTP,
+            Local,
+            RemoteFile,
+            RemoteFileSet,
+        )
 
 
 if __name__ == '__main__':

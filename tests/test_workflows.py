@@ -27,7 +27,7 @@ class TestWorkflows(unittest.TestCase):
     def test_test_workflow_exists_and_covers_four_pythons(self):
         content = self._read('test.yml')
         for version in ('3.10', '3.11', '3.12', '3.13'):
-            self.assertIn('"{0}"'.format(version), content)
+            self.assertIn(f'"{version}"', content)
         self.assertIn('pytest', content)
         self.assertIn('ruff', content)
         self.assertIn('actions/checkout@v4', content)
