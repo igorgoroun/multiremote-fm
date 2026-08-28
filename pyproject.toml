@@ -37,7 +37,7 @@ dev = [
 "Bug Tracker" = "https://github.com/igorgoroun/multiremote-fm/issues"
 
 [tool.setuptools]
-packages = ["multiremote_fm"]
+packages = ["multiremote_fm", "multiremote_fm.backends"]
 
 [tool.setuptools.package-data]
 multiremote_fm = ["py.typed"]
