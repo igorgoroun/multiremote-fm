@@ -1,6 +1,6 @@
 # Multi-Remote File Manager
 
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A modern Python library for seamless file manipulation across multiple remote locations with a unified API.
@@ -12,7 +12,6 @@ A modern Python library for seamless file manipulation across multiple remote lo
 - **File Operations** - Search, download, upload, move, delete
 - **Batch Processing** - Handle multiple files efficiently
 - **Flexible Filtering** - File masks and path-based filtering
-- **Memory Efficient** - Optional content loading
 - **Type Safe** - Full type hints support
 
 ## Supported Remotes
@@ -38,8 +37,13 @@ pip install multiremote-fm
 ```bash
 git clone https://github.com/igorgoroun/multiremote-fm
 cd multiremote-fm
-pip install -e .
+python -m venv venv
+venv/bin/pip install -e ".[dev]"
+venv/bin/pytest tests/ -v
 ```
+
+The published version is stamped by CI, which rewrites the `version = ` line in
+`pyproject.toml` from the release tag before building.
 
 ## Quick Start
 
@@ -60,6 +64,9 @@ print(f"Found {len(files)} PDF files")
 files = local.with_path('/home/user/documents').with_mask('*.txt').download()
 for file in files:
     print(f"File: {file.name}, Size: {file.size}, Type: {file.mimetype}")
+
+# Get file list without loading content into memory
+files = local.with_path('/home/user/documents').with_mask('*.txt').download(download_content=False)
 ```
 
 ### Working with Multiple Remotes
@@ -217,8 +224,8 @@ sftp = SFTP(
     response_timeout=30
 )
 
-# Note: Requires 'paramiko' package
-# Install with: pip install paramiko
+# Note: Requires the optional 'sftp' extra
+# Install with: pip install multiremote-fm[sftp]
 ```
 
 ### Common Methods
@@ -340,7 +347,15 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Changelog
 
-### v0.1.0 (Current)
+### v0.2.0 (Current)
+- ✅ Real installable `multiremote_fm` package
+- ✅ The five operations implemented once over a backend protocol
+- ✅ Fluent methods are copy-on-write; no state leaks between chains
+- ✅ `RemoteFileSet` deduplicates by file name
+- ✅ SFTP moved to the optional `sftp` extra with an actionable ImportError
+- ✅ Ships `py.typed`
+
+### v0.1.0
 - ✅ Initial release
 - ✅ Local, FTP, FTPS, SFTP drivers
 - ✅ Core file operations
