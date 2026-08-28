@@ -1,5 +1,6 @@
 """Multi-remote file manager package."""
 
+from .driver import BaseDriver, RemoteDriver
 from .exceptions import (
     DownloadingError,
     MovingError,
@@ -14,6 +15,8 @@ __version__ = '0.2.0'
 __all__ = [
     'RemoteFile',
     'RemoteFileSet',
+    'BaseDriver',
+    'RemoteDriver',
     'NothingToUploadException',
     'SSHPasswordRSAError',
     'DownloadingError',
