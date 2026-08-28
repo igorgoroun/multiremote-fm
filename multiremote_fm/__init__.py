@@ -9,7 +9,7 @@ from .exceptions import (
     UploadingError,
 )
 from .files import RemoteFile, RemoteFileSet
-from .remotes import FTP, FTPS, Local
+from .remotes import FTP, FTPS, SFTP, Local
 
 __version__ = '0.2.0'
 
@@ -21,6 +21,7 @@ __all__ = [
     'Local',
     'FTP',
     'FTPS',
+    'SFTP',
     'NothingToUploadException',
     'SSHPasswordRSAError',
     'DownloadingError',

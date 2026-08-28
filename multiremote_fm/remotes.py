@@ -1,8 +1,13 @@
 """The frozen public remotes. Each one builds a backend and delegates."""
 
+from types import TracebackType
+from typing import Optional, Type
+
 from .backends.ftp import FtpBackend
 from .backends.local import LocalBackend
+from .backends.sftp import SftpBackend
 from .driver import RemoteDriver
+from .exceptions import SSHPasswordRSAError
 
 
 class Local(RemoteDriver):
@@ -63,3 +68,41 @@ class FTPS(FTP):
             encoding=encoding,
             tls=True,
         )
+
+
+class SFTP(RemoteDriver):
+    """SSH File Transfer Protocol remote."""
+
+    def __init__(
+        self,
+        host: str,
+        port: int = 22,
+        login: str = '',
+        password: Optional[str] = None,
+        rsa: Optional[bytes] = None,
+        response_timeout: int = 30,
+    ) -> None:
+        if not (password or rsa):
+            raise SSHPasswordRSAError()
+        super().__init__(
+            backend=SftpBackend(
+                host=host,
+                port=port,
+                login=login,
+                password=password,
+                rsa=rsa,
+                response_timeout=response_timeout,
+            )
+        )
+
+    def __enter__(self) -> 'SFTP':
+        self.backend.connect()
+        return self
+
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> None:
+        self.backend.close()
