@@ -4,19 +4,46 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "multiremote-fm"
-version = "{{VERSION_PLACEHOLDER}}"
+version = "0.2.0"
 authors = [
   { name="Igor Horun", email="snake@snake.mk.ua" },
 ]
 description = "Library to manage files on multitype remotes - ftp, sftp, ftps, local, etc.."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
+]
+
+[project.optional-dependencies]
+sftp = ["paramiko>=3.2,<6"]
+dev = [
+    "pytest>=9.1,<10",
+    "ruff>=0.16,<0.17",
+    "mypy>=2.3,<3",
+    "build>=1.2",
+    "setuptools>=61.0",
+    "paramiko>=3.2,<6",
 ]
 
 [project.urls]
 "Homepage" = "https://github.com/igorgoroun/multiremote-fm"
 "Bug Tracker" = "https://github.com/igorgoroun/multiremote-fm/issues"
+
+[tool.setuptools]
+packages = ["multiremote_fm"]
+
+[tool.setuptools.package-data]
+multiremote_fm = ["py.typed"]
+
+[tool.ruff.format]
+# Migrated from the untracked, git-ignored ruff.toml (approved OD-2).
+# Ruff prefers ruff.toml over pyproject.toml, so ruff.toml must be deleted for this
+# to take effect - see Step 4.
+quote-style = "single"
