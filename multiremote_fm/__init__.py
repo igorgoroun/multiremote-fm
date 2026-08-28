@@ -7,10 +7,13 @@ from .exceptions import (
     SSHPasswordRSAError,
     UploadingError,
 )
+from .files import RemoteFile, RemoteFileSet
 
 __version__ = '0.2.0'
 
 __all__ = [
+    'RemoteFile',
+    'RemoteFileSet',
     'NothingToUploadException',
     'SSHPasswordRSAError',
     'DownloadingError',
