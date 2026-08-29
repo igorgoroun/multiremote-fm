@@ -377,4 +377,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Made with ❤️ by [Igor Horun](mailto:snake@snake.mk.ua)**
+**Made with ❤️ by [Ihor Horun](mailto:igor.goroun@gmail.com)**
