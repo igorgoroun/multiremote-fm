@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "multiremote-fm"
 version = "0.2.0"
 authors = [
-  { name="Ihor Horun", email="igor.goroun@gmail.com" },
+  { name="Ihor Horun", email="igor.goroun@yahoo.com" },
 ]
 description = "Library to manage files on multitype remotes - ftp, sftp, ftps, local, etc.."
 readme = "README.md"

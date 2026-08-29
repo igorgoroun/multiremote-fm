@@ -24,7 +24,6 @@ A modern Python library for seamless file manipulation across multiple remote lo
 | SFTP | ✅ Supported | SSH File Transfer Protocol |
 | REST API | 🔄 Planned | HTTP-based file operations |
 | Amazon S3 | 🔄 Planned | AWS S3 storage |
-| Dropbox | 🔄 Planned | Dropbox cloud storage |
 
 ## Installation
 
@@ -347,13 +346,20 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Changelog
 
+### Planned Features
+- 🔄 REST API driver
+- 🔄 AWS S3 driver
+- 🔄 Async support
+- 🔄 Progress callbacks
+- 🔄 Connection pooling
+- 🔄 Lazy files downloading
+
 ### v0.2.0 (Current)
 - ✅ Real installable `multiremote_fm` package
 - ✅ The five operations implemented once over a backend protocol
 - ✅ Fluent methods are copy-on-write; no state leaks between chains
 - ✅ `RemoteFileSet` deduplicates by file name
 - ✅ SFTP moved to the optional `sftp` extra with an actionable ImportError
-- ✅ Ships `py.typed`
 
 ### v0.1.0
 - ✅ Initial release
@@ -362,19 +368,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - ✅ Fluent API design
 - ✅ Type hints support
 
-### Planned Features
-- 🔄 REST API driver
-- 🔄 AWS S3 driver
-- 🔄 Async support
-- 🔄 Progress callbacks
-- 🔄 Connection pooling
-
 ## Support
 
-- 📖 [Documentation](https://github.com/igorgoroun/multiremote-fm)
-- 🐛 [Issue Tracker](https://github.com/igorgoroun/multiremote-fm/issues)
-- 💬 [Discussions](https://github.com/igorgoroun/multiremote-fm/discussions)
+- [Documentation](https://github.com/igorgoroun/multiremote-fm)
+- [Issue Tracker](https://github.com/igorgoroun/multiremote-fm/issues)
+- [Discussions](https://github.com/igorgoroun/multiremote-fm/discussions)
 
 ---
 
-**Made with ❤️ by [Ihor Horun](mailto:igor.goroun@gmail.com)**
+**Polished with AI**
