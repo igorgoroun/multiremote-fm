@@ -164,3 +164,6 @@ tmp/
 pyrightconfig.json
 .helix/
 .zed/
+
+# Local-only planning artifacts, not part of the published package
+docs/
